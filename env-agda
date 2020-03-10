@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+E=~/.env-agda
+rm -rf "$E"
+mkdir -p "$E"
+cp -a ~/.emacs.d "$E"
+
+cat > ~/.env-agda/.Dockerfile << EOF_DOCKERFILE
+from debian:sid
+# Deliberately use separate run commands
+run apt-get update
+run apt-get install -y agda-bin
+run apt-get install -y agda-stdlib
+run apt-get install -y emacs
+run apt-get install -y elpa-agda2-mode
+run apt-get install -y elpa-auto-complete
+run apt-get install -y elpa-rainbow-delimiters
+run apt-get install -y elpa-evil
+run apt-get install -y screen
+run apt-get install -y locales
+run apt-get install -y git
+run echo en_US.UTF-8 UTF-8 > /etc/locale.gen
+run dpkg-reconfigure locales --frontend=noninteractive
+run useradd -s /bin/bash user
+env SHELL /bin/bash
+env LANG en_US.UTF-8
+env LC_CTYPE en_US.UTF8
+user user
+cmd bash
+EOF_DOCKERFILE
+
+docker build -t env-agda -f ~/.env-agda/.Dockerfile ~/.env-agda && \
+docker run  \
+           -w /home/user/pwd \
+           -e TERM="$TERM" \
+           -v "$HOME/.env-agda":/home/user \
+           -v "$PWD":/home/user/pwd \
+           -it env-agda "$@"
