@@ -4,7 +4,6 @@ import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 open import Data.Bool using (Bool ; true ; false ; if_then_else_ ; _∨_ ; _∧_)
-open import Relation.Nullary.Decidable using (⌊_⌋)
 open import Data.List using (List ; [] ; _∷_ ; map ; all ; any ; and ; or )
 open import Data.List.Relation.Unary.AllPairs
 open import Data.List.Relation.Unary.All
@@ -14,7 +13,7 @@ open import Level using (0ℓ)
 open import Relation.Unary using (Pred)
 open import Relation.Binary
 open import Relation.Nullary
-open import Relation.Nullary.Decidable
+open import Relation.Nullary.Decidable using (True; False; toWitness)
 open import Relation.Nullary.Negation
 open import Data.Empty
 open import Data.Product
@@ -25,8 +24,14 @@ record Interval : Set where
     lower : ℕ
     size : ℕ
 
-interval-upper : Interval → ℕ
-interval-upper i = Interval.lower i + Interval.size i
+∣_∣ : Interval → ℕ
+∣_∣ i = Interval.size i
+
+⌈_⌉ : Interval → ℕ
+⌈_⌉ i = Interval.lower i + Interval.size i
+
+⌊_⌋ : Interval → ℕ
+⌊_⌋ i = Interval.lower i
 
 module _ where
   i₀ = [ 2 ▹ 4 ]
@@ -34,15 +39,14 @@ module _ where
   i₂ = [ 11 ▹ 5 ]
   i₃ = [ 1 ▹ 10 ]
 
-
 data _∈_ : (n : ℕ) → Interval → Set where
-  contains : {n : ℕ} → {i : Interval} → (proof : ((n ≤ Interval.lower i + Interval.size i) × (Interval.lower i ≤ n))) → n ∈ i
+  contains : {n : ℕ} → {i : Interval} → (proof : ((n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n))) → n ∈ i
 
 module _ where
-  checkInRange : (i : Interval) → (n : ℕ) → Dec ((n ≤ Interval.lower i + Interval.size i) × (Interval.lower i ≤ n))
-  checkInRange i n with n ≤? Interval.lower i + Interval.size i
+  checkInRange : (i : Interval) → (n : ℕ) → Dec ((n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n))
+  checkInRange i n with n ≤? ⌈ i ⌉
   ...                | no ¬p = no (λ z → ¬p (proj₁ z))
-  ...                | yes p with  Interval.lower i ≤? n
+  ...                | yes p with ⌊ i ⌋ ≤? n
   ...                           | yes q = yes (p , q)
   ...                           | no ¬q = no (λ z → ¬q (proj₂ z))
 
@@ -66,22 +70,22 @@ _∈?_ n i with checkInRange i n
 
 
 module _ where
-  checkIntersect : (l : Interval) → (r : Interval) → Dec ((Interval.lower l ∈ r) ⊎ ((Interval.lower l + Interval.size l) ∈ r) ⊎ (Interval.lower r ∈ l))
-  checkIntersect l r with (Interval.lower l) ∈? r
+  checkIntersect : (l : Interval) → (r : Interval) → Dec ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))
+  checkIntersect l r with ⌊ l ⌋ ∈? r
   ...                   | yes p = yes (inj₁ p)
-  ...                   | no ¬p with (Interval.lower l + Interval.size l) ∈? r
+  ...                   | no ¬p with ⌈ l ⌉ ∈? r
   ...                              | yes q = yes (inj₂ (inj₁ q))
-  ...                              | no ¬q with (Interval.lower r) ∈? l
+  ...                              | no ¬q with ⌊ r ⌋ ∈? l
   ...                                         | yes k = yes (inj₂ (inj₂ k))
   ...                                         | no ¬k = no lem
     where
-    lem : ¬ ((Interval.lower l ∈ r) ⊎ ((Interval.lower l + Interval.size l) ∈ r) ⊎ (Interval.lower r ∈ l))
+    lem : ¬ ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))
     lem (inj₁ x) = ¬p x
     lem (inj₂ (inj₁ x)) = ¬q x
     lem (inj₂ (inj₂ y)) = ¬k y
 
 data _∩_ : Rel Interval 0ℓ where
-  intersects : {l r : Interval} → (proof : ((Interval.lower l ∈ r) ⊎ ((Interval.lower l + Interval.size l) ∈ r) ⊎ (Interval.lower r ∈ l))) → l ∩ r
+  intersects : {l r : Interval} → (proof : ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))) → l ∩ r
 
 construct-intersect : {l : Interval} → {r : Interval} → {proof : True (checkIntersect l r)} → l ∩ r
 construct-intersect {l} {r} {proof} = intersects (toWitness proof)
