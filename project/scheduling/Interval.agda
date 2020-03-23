@@ -7,14 +7,14 @@ open import Data.Bool using (Bool ; true ; false ; if_then_else_ ; _∨_ ; _∧_
 open import Data.List using (List ; [] ; _∷_ ; map ; all ; any ; and ; or )
 open import Data.List.Relation.Unary.AllPairs
 open import Data.List.Relation.Unary.All
-open import Data.Maybe using (Maybe ; nothing ; just)
 open import Data.Sum
-open import Level using (0ℓ)
+open import Level using (0ℓ; Level)
 open import Relation.Unary using (Pred)
 open import Relation.Binary
 open import Relation.Nullary
-open import Relation.Nullary.Decidable using (True; False; toWitness)
+open import Relation.Nullary.Decidable using (True; False; toWitness; fromWitness; fromWitnessFalse)
 open import Relation.Nullary.Negation
+open import Relation.Nullary.Sum
 open import Data.Empty
 open import Data.Product
 
@@ -39,67 +39,46 @@ module _ where
   i₂ = [ 11 ▹ 5 ]
   i₃ = [ 1 ▹ 10 ]
 
-data _∈_ : (n : ℕ) → Interval → Set where
-  contains : {n : ℕ} → {i : Interval} → (proof : ((n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n))) → n ∈ i
+open import Relation.Nullary.Product
+data _∈_ : REL ℕ Interval 0ℓ where
+  contains : {n : ℕ} → {i : Interval} → {proof : True ((n ≤? ⌈ i ⌉) ×-dec (⌊ i ⌋ ≤? n))} → n ∈ i
 
-module _ where
-  checkInRange : (i : Interval) → (n : ℕ) → Dec ((n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n))
-  checkInRange i n with n ≤? ⌈ i ⌉
-  ...                | no ¬p = no (λ z → ¬p (proj₁ z))
-  ...                | yes p with ⌊ i ⌋ ≤? n
-  ...                           | yes q = yes (p , q)
-  ...                           | no ¬q = no (λ z → ¬q (proj₂ z))
-
-construct-contains : {n : ℕ} → {i : Interval} → {proof : True (checkInRange i n)} → n ∈ i
-construct-contains {n} {i} {proof} = contains (toWitness proof)
-
+∈⇒∈p : {n : ℕ} {i : Interval} → n ∈ i → (n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n)
+∈⇒∈p (contains {proof = proof}) = toWitness proof
 
 _ : 3 ∈ i₀
-_ = construct-contains
+_ = contains
 
---_ : 1 ∈ i₀ -- Doesn't compile!
---_ = construct-contains
+--_ : 10 ∈ i₀ -- Doesn't compile!
+--_ = contains
 
-_∈?_ : (n : ℕ) → (i : Interval) → Dec (n ∈ i)
-_∈?_ n i with checkInRange i n
-...         | yes p = yes (contains p)
-...         | no ¬p = no lem
+_∈?_ : Decidable _∈_
+_∈?_ n i with ((n ≤? ⌈ i ⌉) ×-dec (⌊ i ⌋ ≤? n))
+...        | yes p = yes (contains {n} {i} {fromWitness p})
+...        | no ¬p = no lem
   where
-  lem : (x : n ∈ i) → ⊥
-  lem (contains prf) = ¬p prf
-
-
-module _ where
-  checkIntersect : (l : Interval) → (r : Interval) → Dec ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))
-  checkIntersect l r with ⌊ l ⌋ ∈? r
-  ...                   | yes p = yes (inj₁ p)
-  ...                   | no ¬p with ⌈ l ⌉ ∈? r
-  ...                              | yes q = yes (inj₂ (inj₁ q))
-  ...                              | no ¬q with ⌊ r ⌋ ∈? l
-  ...                                         | yes k = yes (inj₂ (inj₂ k))
-  ...                                         | no ¬k = no lem
-    where
-    lem : ¬ ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))
-    lem (inj₁ x) = ¬p x
-    lem (inj₂ (inj₁ x)) = ¬q x
-    lem (inj₂ (inj₂ y)) = ¬k y
+  lem : n ∈ i → ⊥
+  lem (contains {proof = p}) = contradiction (toWitness p) ¬p
 
 data _∩_ : Rel Interval 0ℓ where
-  intersects : {l r : Interval} → (proof : ((⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l))) → l ∩ r
-
-construct-intersect : {l : Interval} → {r : Interval} → {proof : True (checkIntersect l r)} → l ∩ r
-construct-intersect {l} {r} {proof} = intersects (toWitness proof)
+  intersects : {l r : Interval} → {proof : True ((⌊ l ⌋ ∈? r) ⊎-dec (⌈ l ⌉ ∈? r) ⊎-dec (⌊ r ⌋ ∈? l))} → l ∩ r
 
 _ : i₀ ∩ i₁
-_ = construct-intersect
-
+_ = intersects
 
 --_ : i₁ ∩ i₂
---_ = construct-intersect -- Yay, doesn't compile!
+--_ = intersects -- Yay, doesn't compile!
 
-¬∩ : (l : Interval) → (r : Interval) → Set
-¬∩ l r = ¬ ( l ∩ r )
+--¬∩? : Decidable _∩_
+--¬∩? l r = ¬ ( l ∩ r )
 
+_∩?_ : Decidable _∩_
+_∩?_ l r with ((⌊ l ⌋ ∈? r) ⊎-dec (⌈ l ⌉ ∈? r) ⊎-dec (⌊ r ⌋ ∈? l))
+...         | yes p = yes (intersects {l} {r} {fromWitness p})
+...         | no ¬p = no lem
+  where
+  lem : (x : l ∩ r) → ⊥
+  lem (intersects {proof = p}) = contradiction (toWitness p) ¬p
 
 module _ where
   demorgan : {A B : Set} → {DA : Dec A} → {DB : Dec B} → ¬ (A × B) → (¬ A) ⊎ (¬ B)
@@ -114,15 +93,39 @@ module _ where
 
 
 data AllIntersect : Pred (List Interval) 0ℓ where
-  all-intersect : {l : List Interval} →  AllPairs _∩_ l → AllIntersect l
+  all-intersect : {l : List Interval} →  {proof : True (allPairs? _∩?_ l)} → AllIntersect l
+
+
+_ : AllIntersect (i₀ ∷ i₁ ∷ i₃ ∷ [])
+_ = all-intersect
+
+--_ : AllIntersect (i₀ ∷ i₁ ∷ i₃ ∷ i₂ ∷ []) -- Doesn't compile!
+--_ = all-intersect
+
+
+module _ where
+  ¬∩ : Rel Interval 0ℓ
+  ¬∩ l r = ¬ (l ∩ r)
+
+  ¬∩? : Decidable ¬∩
+  ¬∩? l r = ¬? (l ∩? r)
 
 data NoneIntersect : Pred (List Interval) 0ℓ where
-  none-intersect : {l : List Interval} → AllPairs ¬∩ l → NoneIntersect l
+  none-intersect : {l : List Interval} → {proof : True (allPairs? ¬∩? l)} → NoneIntersect l
 
-_ : AllIntersect ( i₀ ∷ i₁ ∷ [])
-_ = all-intersect
-      ((intersects
-        (inj₂
-         (inj₂ (contains (s≤s (s≤s (s≤s (s≤s z≤n))) , s≤s (s≤s z≤n)))))
-        ∷ [])
-       ∷ [] ∷ [])
+_ : NoneIntersect (i₁ ∷ i₂ ∷ [])
+_ = none-intersect
+
+--_ : NoneIntersect (i₁ ∷ i₂ ∷ i₀ ∷ []) -- Doesn't compile!
+--_ = none-intersect
+
+NoneIntersect⇒p : {l : List Interval} → NoneIntersect l → AllPairs ¬∩ l
+NoneIntersect⇒p (none-intersect {proof = proof}) = toWitness proof
+
+NoneIntersect? : Relation.Unary.Decidable NoneIntersect
+NoneIntersect? l with (allPairs? ¬∩? l)
+...                  | yes p = yes (none-intersect {l} {fromWitness p})
+...                  | no ¬p = no lem
+  where
+  lem : NoneIntersect l → ⊥
+  lem (none-intersect {proof = p}) = contradiction (toWitness p) ¬p
