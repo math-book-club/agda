@@ -15,6 +15,7 @@ open import Relation.Nullary
 open import Relation.Nullary.Decidable using (True; False; toWitness; fromWitness; fromWitnessFalse)
 open import Relation.Nullary.Negation
 open import Relation.Nullary.Sum
+open import Relation.Nullary.Product
 open import Data.Empty
 open import Data.Product
 
@@ -33,13 +34,49 @@ record Interval : Set where
 ⌊_⌋ : Interval → ℕ
 ⌊_⌋ i = Interval.lower i
 
+_≟Interval_ : Decidable {A = Interval} _≡_
+[ lower ▹ size ] ≟Interval [ lower₁ ▹ size₁ ] with lower ≟ lower₁ | size ≟ size₁
+...                                              | yes p          | yes q = yes
+                                                                              (begin
+                                                                               [ lower ▹ size ] ≡⟨ cong ([_▹_] lower) q ⟩
+                                                                               [ lower ▹ size₁ ] ≡⟨ cong (λ z → [ z ▹ size₁ ]) p ⟩
+                                                                               [ lower₁ ▹ size₁ ] ∎)
+...                                              | no ¬p          | yes q = no lem
+  where
+  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+  lem refl = ¬p refl
+...                                              | yes p          | no ¬q = no lem
+  where
+  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+  lem refl = ¬q refl
+...                                              | no ¬p          | no ¬q = no lem
+  where
+  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+  lem refl = ¬q refl
+
 module _ where
   i₀ = [ 2 ▹ 4 ]
   i₁ = [ 4 ▹ 6 ]
   i₂ = [ 11 ▹ 5 ]
   i₃ = [ 1 ▹ 10 ]
 
-open import Relation.Nullary.Product
+data _<<_ : Rel Interval 0ℓ where
+  strictly-less : {l r : Interval} → {proof : True (⌈ l ⌉ <? ⌊ r ⌋)} → l << r
+
+_ : i₀ << i₂
+_ = strictly-less
+
+--_ : i₀ << i₁ -- doesn't compile!
+--_ = strictly-less
+
+_<<?_ : Decidable {A = Interval} _<<_
+l <<? r with (⌈ l ⌉ <? ⌊ r ⌋)
+...        | yes p = yes (strictly-less {proof = fromWitness p})
+...        | no ¬p = no lem
+  where
+  lem : (x : l << r) → ⊥
+  lem (strictly-less {proof = p}) = contradiction (toWitness p) ¬p
+
 data _∈_ : REL ℕ Interval 0ℓ where
   contains : {n : ℕ} → {i : Interval} → {proof : True ((n ≤? ⌈ i ⌉) ×-dec (⌊ i ⌋ ≤? n))} → n ∈ i
 
