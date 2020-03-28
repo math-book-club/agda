@@ -77,6 +77,9 @@ record AcyclicGraphNode (E N : Set) : Set where
     value : N
     edges : List (Pair E (AcyclicGraphNode E N))
 
+get-val : {E N : Set} → AcyclicGraphNode E N → N
+get-val x = AcyclicGraphNode.value x
+
 _≟Pair_ : {A B : Set} → {_≟A_ : Decidable {A = A} _≡_} → {_≟B_ : Decidable {A = B} _≡_} → Decidable {A = Pair A B} _≡_
 _≟Pair_ {_≟A_ = _≟A_} {_≟B_} (fl , sl) (fr , sr) with fl ≟A fr | sl ≟B sr
 ...                                           | yes p | yes q = yes
@@ -226,7 +229,7 @@ descendants n[ _ , [] ]n = []
 descendants n[ value , (_ , child) ∷ edges ]n = descendants child ++ (child ∷ descendants n[ value , edges ]n)
 
 all-nodes : {E N : Set} → {_≟E_ : Decidable {A = E} _≡_} → {_≟N_ : Decidable {A = N} _≡_} → AcyclicGraph E N → List (AcyclicGraphNode E N)
-all-nodes {_≟E_ = _≟E_} {_≟N_ = _≟N_} g[ head ]g = list-remove-duplicates (descendants head) (_≟AGN_ {_≟E_ = _≟E_} {_≟N_ = _≟N_})
+all-nodes {_≟E_ = _≟E_} {_≟N_ = _≟N_} g[ head ]g = list-remove-duplicates (head ∷ descendants head) (_≟AGN_ {_≟E_ = _≟E_} {_≟N_ = _≟N_})
 
 data _↝_ : {E N : Set} → Rel (AcyclicGraphNode E N) 0ℓ where
   depends-on : {E N : Set} → (_≟E_ : Decidable {A = E} _≡_) → (_≟N_ : Decidable {A = N} _≡_) → {parent : AcyclicGraphNode E N} → {child :  AcyclicGraphNode E N} → {proof : True ((_∈?_ (_≟AGN_ {_≟E_ = _≟E_} {_≟N_ = _≟N_})) child (descendants parent))} → parent ↝ child
