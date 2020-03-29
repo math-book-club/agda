@@ -1,5 +1,5 @@
 module DecidableEquality where
---open import Data.Nat
+open import Data.Nat using (ℕ)
 --import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
@@ -19,13 +19,7 @@ open import Relation.Nullary.Product
 open import Relation.Nullary.Sum
 open import Data.Empty
 open import Data.Product using (_×_)
-open import Interval
-open import AcyclicGraph
 open import Agda.Builtin.Unit
-
-
-_≟⊤_ : Decidable {A = ⊤} _≡_
-tt ≟⊤ tt = yes refl
 
 record DecEq (A : Set) : Set where
   field
@@ -33,6 +27,26 @@ record DecEq (A : Set) : Set where
 
 open DecEq {{...}}
 
+module _ where
+  _≟⊤_ : Decidable {A = ⊤} _≡_
+  tt ≟⊤ tt = yes refl
+
 instance
   DecEq⊤ : DecEq ⊤
   _≟_ {{DecEq⊤}} = _≟⊤_
+
+  DecEqℕ : DecEq ℕ
+  _≟_ {{DecEqℕ}} = Data.Nat._≟_
+
+--  DecEqBool : DecEq Bool
+--  _≟_ {{DecEqBool}} = Data.Bool._≟_
+
+module _ where
+  test : {A : Set} {{DecEqA : DecEq A}} → A → A → ℕ
+  test a b with a ≟ b
+  ... | yes p = 1
+  ... | no ¬p = 2
+
+  _ = test 4 5
+
+--  _ = test true true

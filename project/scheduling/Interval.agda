@@ -18,6 +18,7 @@ open import Relation.Nullary.Sum
 open import Relation.Nullary.Product
 open import Data.Empty
 open import Data.Product
+open import DecidableEquality
 
 record Interval : Set where
   constructor [_▹_]
@@ -34,25 +35,30 @@ record Interval : Set where
 ⌊_⌋ : Interval → ℕ
 ⌊_⌋ i = Interval.lower i
 
-_≟Interval_ : Decidable {A = Interval} _≡_
-[ lower ▹ size ] ≟Interval [ lower₁ ▹ size₁ ] with lower ≟ lower₁ | size ≟ size₁
-...                                              | yes p          | yes q = yes
-                                                                              (begin
-                                                                               [ lower ▹ size ] ≡⟨ cong ([_▹_] lower) q ⟩
-                                                                               [ lower ▹ size₁ ] ≡⟨ cong (λ z → [ z ▹ size₁ ]) p ⟩
-                                                                               [ lower₁ ▹ size₁ ] ∎)
-...                                              | no ¬p          | yes q = no lem
-  where
-  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
-  lem refl = ¬p refl
-...                                              | yes p          | no ¬q = no lem
-  where
-  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
-  lem refl = ¬q refl
-...                                              | no ¬p          | no ¬q = no lem
-  where
-  lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
-  lem refl = ¬q refl
+module _ where
+  _≟Interval_ : Decidable {A = Interval} _≡_
+  [ lower ▹ size ] ≟Interval [ lower₁ ▹ size₁ ] with lower ≟ lower₁ | size ≟ size₁
+  ...                                              | yes p          | yes q = yes
+                                                                                (begin
+                                                                                 [ lower ▹ size ] ≡⟨ cong ([_▹_] lower) q ⟩
+                                                                                 [ lower ▹ size₁ ] ≡⟨ cong (λ z → [ z ▹ size₁ ]) p ⟩
+                                                                                 [ lower₁ ▹ size₁ ] ∎)
+  ...                                              | no ¬p          | yes q = no lem
+    where
+    lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+    lem refl = ¬p refl
+  ...                                              | yes p          | no ¬q = no lem
+    where
+    lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+    lem refl = ¬q refl
+  ...                                              | no ¬p          | no ¬q = no lem
+    where
+    lem : (x : [ lower ▹ size ] ≡ [ lower₁ ▹ size₁ ]) → ⊥
+    lem refl = ¬q refl
+
+instance
+  DecEqInterval : DecEq Interval
+  DecEq._≟_ DecEqInterval = _≟Interval_
 
 module _ where
   i₀ = [ 2 ▹ 4 ]

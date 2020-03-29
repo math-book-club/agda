@@ -1,6 +1,4 @@
 module Schedule where
-open import Data.Nat
-import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 open import Data.Bool using (Bool ; true ; false ; if_then_else_ ; _∨_ ; _∧_)
@@ -20,23 +18,23 @@ open import Relation.Nullary.Sum
 open import Data.Empty
 open import Data.Product using (_×_)
 open import Interval
+open import Pair
 open import AcyclicGraph
 open import Agda.Builtin.Unit
+open import DecidableEquality
 
+open DecEq {{...}}
 
 Runnable = AcyclicGraphNode ⊤ Interval
 
-_≟⊤_ : Decidable {A = ⊤} _≡_
-tt ≟⊤ tt = yes refl
-
 data _↝⇒<<_ : Rel Runnable 0ℓ where
-  dependency-implies-ordering : {l r : Runnable} → {proof : True (((_↝?_ _≟⊤_ _≟Interval_ l r ) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (_↝?_ _≟⊤_ _≟Interval_ l r ))} → l ↝⇒<< r
+  dependency-implies-ordering : {l r : Runnable} → {proof : True (((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l ↝? r))} → l ↝⇒<< r
 
 ↝⇒<<⇒p : {l r : Runnable} → l ↝⇒<< r → ((l ↝ r) × (get-val l << get-val r) ⊎ (¬ l ↝ r))
 ↝⇒<<⇒p (dependency-implies-ordering {proof = p}) = toWitness p
 
 _↝⇒<<?_ : Decidable {A = Runnable} _↝⇒<<_
-l ↝⇒<<? r with  ((_↝?_ _≟⊤_ _≟Interval_ l r ) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (_↝?_ _≟⊤_ _≟Interval_ l r )
+l ↝⇒<<? r with  ((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l ↝? r)
 ...          | yes p = yes (dependency-implies-ordering {proof = fromWitness p})
 ...          | no ¬p = no lem
   where
@@ -59,13 +57,13 @@ record Schedule : Set where
   constructor s[_]s
   field
     schedule : AcyclicGraph ⊤ Interval
-    {no-interval-intersection} : True (NoneIntersect? (map get-val (all-nodes {_≟E_ = _≟⊤_} {_≟N_ = _≟Interval_} schedule)))
-    {forall-dependencies-imply-ordering} : True (allPairs? _↝⇔<<?_ (all-nodes {_≟E_ = _≟⊤_} {_≟N_ = _≟Interval_} schedule))
+    {no-interval-intersection} : True (NoneIntersect? (map get-val (all-nodes schedule)))
+    {forall-dependencies-imply-ordering} : True (allPairs? _↝⇔<<?_ (all-nodes schedule))
 
-schedule⇒no-interval-intersection : (s : Schedule) → NoneIntersect (map get-val (all-nodes {_≟E_ = _≟⊤_} {_≟N_ = _≟Interval_} (Schedule.schedule s)))
+schedule⇒no-interval-intersection : (s : Schedule) → NoneIntersect (map get-val (all-nodes (Schedule.schedule s)))
 schedule⇒no-interval-intersection s = toWitness (Schedule.no-interval-intersection s)
 
-schedule⇒forall-dependencies-imply-ordering : (s : Schedule) → AllPairs _↝⇔<<_ (all-nodes {_≟E_ = _≟⊤_} {_≟N_ = _≟Interval_} (Schedule.schedule s))
+schedule⇒forall-dependencies-imply-ordering : (s : Schedule) → AllPairs _↝⇔<<_ (all-nodes (Schedule.schedule s))
 schedule⇒forall-dependencies-imply-ordering s = toWitness (Schedule.forall-dependencies-imply-ordering s)
 
 r0 : Runnable
