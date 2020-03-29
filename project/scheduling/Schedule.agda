@@ -25,15 +25,16 @@ open import DecidableEquality
 
 open DecEq {{...}}
 
-Runnable = AcyclicGraphNode ⊤ Interval
+Task = AcyclicGraphNode ⊤ Interval
+TaskGraph = AcyclicGraph ⊤ Interval
 
-data _↝⇒<<_ : Rel Runnable 0ℓ where
-  dependency-implies-ordering : {l r : Runnable} → {proof : True (((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l ↝? r))} → l ↝⇒<< r
+data _↝⇒<<_ : Rel Task 0ℓ where
+  dependency-implies-ordering : {l r : Task} → {proof : True (((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l ↝? r))} → l ↝⇒<< r
 
-↝⇒<<⇒p : {l r : Runnable} → l ↝⇒<< r → ((l ↝ r) × (get-val l << get-val r) ⊎ (¬ l ↝ r))
+↝⇒<<⇒p : {l r : Task} → l ↝⇒<< r → ((l ↝ r) × (get-val l << get-val r) ⊎ (¬ l ↝ r))
 ↝⇒<<⇒p (dependency-implies-ordering {proof = p}) = toWitness p
 
-_↝⇒<<?_ : Decidable {A = Runnable} _↝⇒<<_
+_↝⇒<<?_ : Decidable {A = Task} _↝⇒<<_
 l ↝⇒<<? r with  ((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l ↝? r)
 ...          | yes p = yes (dependency-implies-ordering {proof = fromWitness p})
 ...          | no ¬p = no lem
@@ -42,10 +43,10 @@ l ↝⇒<<? r with  ((l ↝? r) ×-dec (get-val l <<? get-val r)) ⊎-dec ¬? (l
   lem (dependency-implies-ordering {proof = p}) = contradiction (toWitness p) ¬p
 
 
-data _↝⇔<<_ : Rel Runnable 0ℓ where
-  bidierctional-dependency-implies-ordering : {l r : Runnable} → {proof : True ((l ↝⇒<<? r) ×-dec (r ↝⇒<<? l))} → l ↝⇔<< r
+data _↝⇔<<_ : Rel Task 0ℓ where
+  bidierctional-dependency-implies-ordering : {l r : Task} → {proof : True ((l ↝⇒<<? r) ×-dec (r ↝⇒<<? l))} → l ↝⇔<< r
 
-_↝⇔<<?_ : Decidable {A = Runnable} _↝⇔<<_
+_↝⇔<<?_ : Decidable {A = Task} _↝⇔<<_
 l ↝⇔<<? r with ((l ↝⇒<<? r) ×-dec (r ↝⇒<<? l))
 ...          | yes p = yes (bidierctional-dependency-implies-ordering {proof = fromWitness p})
 ...          | no ¬p = no lem
@@ -66,16 +67,16 @@ schedule⇒no-interval-intersection s = toWitness (Schedule.no-interval-intersec
 schedule⇒forall-dependencies-imply-ordering : (s : Schedule) → AllPairs _↝⇔<<_ (all-nodes (Schedule.schedule s))
 schedule⇒forall-dependencies-imply-ordering s = toWitness (Schedule.forall-dependencies-imply-ordering s)
 
-r0 : Runnable
+r0 : Task
 r0 = n[ [ 7 ▹ 3 ] , [] ]n
 
-r1 : Runnable
+r1 : Task
 r1 = n[ [ 0 ▹ 4 ] , ((tt , r0) ∷ []) ]n
 
-r2 : Runnable
+r2 : Task
 r2 = n[ [ 6 ▹ 2 ] , (tt , r0) ∷ [] ]n
 
-r3 : Runnable
+r3 : Task
 r3 = n[ [ 11 ▹ 2 ] , (tt , r0) ∷ [] ]n
 
 g0 = g[ r1 ]g
