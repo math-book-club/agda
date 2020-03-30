@@ -75,6 +75,9 @@ _ = strictly-less
 --_ : i₀ << i₁ -- doesn't compile!
 --_ = strictly-less
 
+<<⇒p : {l r : Interval} → l << r → ⌈ l ⌉ < ⌊ r ⌋
+<<⇒p (strictly-less {proof = p}) = toWitness p
+
 _<<?_ : Decidable {A = Interval} _<<_
 l <<? r with (⌈ l ⌉ <? ⌊ r ⌋)
 ...        | yes p = yes (strictly-less {proof = fromWitness p})
@@ -86,8 +89,8 @@ l <<? r with (⌈ l ⌉ <? ⌊ r ⌋)
 data _∈_ : REL ℕ Interval 0ℓ where
   contains : {n : ℕ} → {i : Interval} → {proof : True ((n ≤? ⌈ i ⌉) ×-dec (⌊ i ⌋ ≤? n))} → n ∈ i
 
-∈⇒∈p : {n : ℕ} {i : Interval} → n ∈ i → (n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n)
-∈⇒∈p (contains {proof = proof}) = toWitness proof
+∈⇒p : {n : ℕ} {i : Interval} → n ∈ i → (n ≤ ⌈ i ⌉) × (⌊ i ⌋ ≤ n)
+∈⇒p (contains {proof = proof}) = toWitness proof
 
 _ : 3 ∈ i₀
 _ = contains
@@ -115,6 +118,9 @@ _ = intersects
 --¬∩? : Decidable _∩_
 --¬∩? l r = ¬ ( l ∩ r )
 
+∩⇒p : {l r : Interval} → l ∩ r → (⌊ l ⌋ ∈ r) ⊎ (⌈ l ⌉ ∈ r) ⊎ (⌊ r ⌋ ∈ l)
+∩⇒p (intersects {proof = p}) = toWitness p
+
 _∩?_ : Decidable _∩_
 _∩?_ l r with ((⌊ l ⌋ ∈? r) ⊎-dec (⌈ l ⌉ ∈? r) ⊎-dec (⌊ r ⌋ ∈? l))
 ...         | yes p = yes (intersects {l} {r} {fromWitness p})
@@ -133,17 +139,6 @@ module _ where
 
   neg-trans : {A B : Set} → (B → A) → ¬ A → ¬ B
   neg-trans {A} {B} B→A ¬A = λ z → ¬A (B→A z)
-
-
-data AllIntersect : Pred (List Interval) 0ℓ where
-  all-intersect : {l : List Interval} →  {proof : True (allPairs? _∩?_ l)} → AllIntersect l
-
-
-_ : AllIntersect (i₀ ∷ i₁ ∷ i₃ ∷ [])
-_ = all-intersect
-
---_ : AllIntersect (i₀ ∷ i₁ ∷ i₃ ∷ i₂ ∷ []) -- Doesn't compile!
---_ = all-intersect
 
 
 module _ where
