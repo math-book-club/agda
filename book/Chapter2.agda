@@ -54,7 +54,7 @@ lem-2-1-2 : {A : Set} → (x y z : A) → (x ≡ y) → (y ≡ z) → (x ≡ z)
 lem-2-1-2 {A} x₀ y₀ z₀ x≡y y≡z =
   let
     D : (x y : A) → (x ≡ y) → Set
-    D x y y≡z = (z : A) → (y ≡ z) → (x ≡ z)
+    D x y x≡y = (z : A) → (y ≡ z) → (x ≡ z)
 
     E : (x z : A) → (x ≡ z) → Set
     E x z q = (x ≡ z)
