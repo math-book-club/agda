@@ -1,11 +1,13 @@
+module Chapter2 where
+
 open import Relation.Binary.PropositionalEquality
 open import Data.Nat
 
 -- ind-single-step :  (D : ℕ → Set) → (n : ℕ) → D n → (D (suc n))
 
 -- D = λ n → 0 ≤ n
-ind-single-step-≤ : (n : ℕ) → (0 ≤ n) → (0 ≤ (suc n))
-ind-single-step-≤ n dₙ = {!!}
+-- ind-single-step-≤ : (n : ℕ) → (0 ≤ n) → (0 ≤ (suc n))
+-- ind-single-step-≤ n dₙ = {!!}
 
 ind-ℕ : (D : ℕ → Set) →
         D zero →
@@ -20,7 +22,8 @@ rec-ℕ : (C : Set) →
         (cₛ : (ℕ → C → C)) →
         ℕ →
         C
-rec-ℕ c₀ cₛ n = {!!}
+rec-ℕ C c₀ cₛ zero    = c₀
+rec-ℕ C c₀ cₛ (suc n) = cₛ n (rec-ℕ C c₀ cₛ n)
 
 -- double-ℕ n = rec-ℕ n (λ _ c → 
 
@@ -48,16 +51,19 @@ lem-2-1-1 {x = x} {y = y} x≡y =
     ind-≡ D d x y x≡y
 
 lem-2-1-2 : {A : Set} → (x y z : A) → (x ≡ y) → (y ≡ z) → (x ≡ z)
-lem-2-1-2 {A} x y z x≡y y≡z =
+lem-2-1-2 {A} x₀ y₀ z₀ x≡y y≡z =
   let
-    D : (x' y' : A) → (x' ≡ y') → Set
-    D x' y' y'≡z' = (z' : A) → (y' ≡ z') → (x' ≡ z')
+    D : (x y : A) → (x ≡ y) → Set
+    D x y y≡z = (z : A) → (y ≡ z) → (x ≡ z)
 
-    d : (x' : A) → D x x refl
-    d = {!!}
+    E : (x z : A) → (x ≡ z) → Set
+    E x z q = (x ≡ z)
 
-    -- E : (x' z' : A) → (x' ≡ z') → Set
-    -- E x' z' 
+    e : (x : A) → E x x refl
+    e x = refl
+
+    d : (x : A) → D x x refl
+    d x = λ z x≡z → ind-≡ E e x z x≡z
   in
-    {!!}
+    (ind-≡ D d x₀ y₀ x≡y) z₀ y≡z
    
