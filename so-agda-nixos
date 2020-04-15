@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+# Sets up Agda environment in NixOS in Docker. The difference from Debian-based
+# environment is that `agda -c` actually works in NixOS, while Debian has some
+# packaging issues.
+#
+# Would be nice to have: get rid of root inside docker; pin packages to a
+# specific nixpkgs commit id; pin docker base image; simplify the script, e.g.
+# docker-build-cached is not my favorite part of it, but it does make it
+# quicker to enter the environment.
+
+set -e
+
+tag=agda-nixos
+use=(.bashrc .bash-preexec.sh .motd .inputrc .screenrc .emacs.d)
+net=${net:-none}
+
+C=~/.cache/docker-build-cached/"$tag"
+mkdir -p "$C"
+cat > "$C"/agda.nix << EOF_AGDA_NIX
+{ nixpkgs ? import <nixpkgs> {} }:
+
+with nixpkgs;
+
+let
+  ghc   = pkgs.haskellPackages.ghcWithPackages
+            (p: with p; [ ieee754 ]);
+  emacs = pkgs.emacsWithPackages
+            (p: with p; [ use-package evil agda2-mode company
+                          rainbow-delimiters ]);
+  der   = agda.mkDerivation(self: {
+    name         = "AgdaEnv";
+    buildDepends = [ pkgs.AgdaStdlib ghc emacs ];
+  });
+in der.env
+EOF_AGDA_NIX
+
+docker-build-cached()
+{
+    local C=~/.cache/docker-build-cached/"$tag"
+    mkdir -p "$C"
+    cat > "$C/Dockerfile.new"
+    if ! cmp "$C"/Dockerfile{,.new} 2> /dev/null ; then
+        docker build -t "$tag" -f "$C/Dockerfile.new" "$C" || return 1
+        mv "$C"/Dockerfile{.new,}
+    fi
+}
+
+docker-build-cached << EOF_DOCKERFILE
+from nixos/nix
+run nix-channel --add https://nixos.org/channels/nixos-19.09 nixos
+run nix-channel --update
+copy agda.nix /root
+run nix-shell /root/agda.nix
+cmd nix-shell /root/agda.nix
+EOF_DOCKERFILE
+
+xhost +SI:localuser:"$USER" > /dev/null 2>&1 || true
+
+vs=()
+for f in "${use[@]}"; do
+    [ -e "$HOME/$f" ] && vs=("${vs[@]}" "-v" "$HOME/$f:/root/$f:ro")
+done
+
+docker run \
+    "${vs[@]}" \
+    --network "$net" \
+    -e TERM="$TERM" \
+    -e DISPLAY="$DISPLAY" \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "$PWD":/root/cwd \
+    -w /root/cwd \
+    -it "$tag" "$@"
