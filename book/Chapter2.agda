@@ -118,16 +118,7 @@ lem-2-1-4-iₗ {A} {x} {y} p =
   in
     ind-≡ D d x y p
 
-inv : {A : Set} → {x y : A } → (p : x ≡ y) → (y ≡ x)
-inv {A} {x} {y} p =
-  let
-    D : (x y : A) → (x ≡ y) → Set
-    D x y _ = y ≡ x
-
-    d : (x : A) → D x x refl
-    d x = refl
-  in
-    ind-≡ D d x y p
+inv = lem-2-1-1
 
 lem-2-1-4-iiᵣ : {A : Set} → {x y : A} → (p : x ≡ y) → (inv p ◾ p ≡ refl)
 lem-2-1-4-iiᵣ {A} {x} {y} p =
