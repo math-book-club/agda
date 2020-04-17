@@ -167,3 +167,27 @@ lem-2-1-4-iiₗ {A} {x} {y} p =
         reflreflx
   in
     ind-≡ D d x y p
+
+lem-2-1-4-iii : {A : Set} → {x y : A} → (p : x ≡ y) → inv (inv p) ≡ p
+lem-2-1-4-iii {A} {x} {y} p =
+  let
+    D : (x y : A) → x ≡ y → Set
+    D x y p =
+      let
+        reflx : x ≡ x
+        reflx = refl
+      in
+        inv (inv p) ≡ p
+
+    d : (x : A) → D x x refl
+    d x =
+      let
+        reflx : x ≡ x
+        reflx = refl
+
+        reflreflx : reflx ≡ reflx
+        reflreflx = refl
+      in
+        reflreflx
+  in
+    ind-≡ D d x y p
