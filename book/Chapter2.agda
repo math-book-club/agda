@@ -25,7 +25,7 @@ rec-ℕ : (C : Set) →
 rec-ℕ C c₀ cₛ zero    = c₀
 rec-ℕ C c₀ cₛ (suc n) = cₛ n (rec-ℕ C c₀ cₛ n)
 
--- double-ℕ n = rec-ℕ n (λ _ c → 
+-- double-ℕ n = rec-ℕ n (λ _ c →
 
 variable
   A : Set
@@ -69,7 +69,7 @@ lem-2-1-2 {A} x₀ y₀ z₀ x≡y y≡z =
 
 _◾_ : {A : Set} → {x y z : A} → (x ≡ y) → (y ≡ z) → (x ≡ z)
 _◾_ {A} {x} {y} {z} p q = lem-2-1-2 {A} x y z p q
-   
+
 lem-2-1-4-iᵣ : {A : Set} → {x y : A} → (p : x ≡ y) → (p ≡ (p ◾ refl))
 lem-2-1-4-iᵣ {A} {x} {y} p =
   let
@@ -90,10 +90,10 @@ lem-2-1-4-iᵣ {A} {x} {y} p =
         reflreflx : (reflx ≡ reflx)
         reflreflx = refl
        in
-        reflreflx 
+        reflreflx
   in
     ind-≡ D d x y p
-   
+
 lem-2-1-4-iₗ : {A : Set} → {x y : A} → (p : x ≡ y) → (p ≡ (refl ◾ p))
 lem-2-1-4-iₗ {A} {x} {y} p =
   let
@@ -114,7 +114,7 @@ lem-2-1-4-iₗ {A} {x} {y} p =
         reflreflx : (reflx ≡ reflx)
         reflreflx = refl
        in
-        reflreflx 
+        reflreflx
   in
     ind-≡ D d x y p
 
