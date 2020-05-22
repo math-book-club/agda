@@ -50,7 +50,8 @@ lem-2-1-1 {x = x} {y = y} x≡y =
   in
     ind-≡ D d x y x≡y
 
-lem-2-1-2 : {A : Set} → (x y z : A) → (x ≡ y) → (y ≡ z) → (x ≡ z)
+-- Induction on p an q
+lem-2-1-2 : {A : Set} → (x y z : A) → (p : x ≡ y) → (q : y ≡ z) → (x ≡ z)
 lem-2-1-2 {A} x₀ y₀ z₀ x≡y y≡z =
   let
     D : (x y : A) → (x ≡ y) → Set
@@ -66,6 +67,30 @@ lem-2-1-2 {A} x₀ y₀ z₀ x≡y y≡z =
     d x = λ z x≡z → ind-≡ E e x z x≡z
   in
     (ind-≡ D d x₀ y₀ x≡y) z₀ y≡z
+
+-- Induction on p
+lem-2-1-2₂ : {A : Set} → (x y z : A) → (p : x ≡ y) → (q : y ≡ z) → (x ≡ z)
+lem-2-1-2₂ {A} x₀ y₀ z₀ x≡y y≡z =
+  let
+    D : (x y : A) → (x ≡ y) → Set
+    D x y x≡y = (z : A) → (y ≡ z) → (x ≡ z)
+
+    d : (x : A) → D x x refl
+    d x = λ z x≡z → x≡z
+  in
+    (ind-≡ D d x₀ y₀ x≡y) z₀ y≡z
+
+-- Induction on q
+lem-2-1-2₃ : {A : Set} → (x y z : A) → (p : x ≡ y) → (q : y ≡ z) → (x ≡ z)
+lem-2-1-2₃ {A} x₀ y₀ z₀ x≡y y≡z =
+  let
+    D : (y z : A) → (y ≡ z) → Set
+    D y z y≡z = (x : A) → (x ≡ y) → (x ≡ z)
+
+    d : (y : A) → D y y refl
+    d y = λ z y≡z → y≡z
+  in
+    (ind-≡ D d y₀ z₀ y≡z) x₀ x≡y
 
 _◾_ : {A : Set} → {x y z : A} → (x ≡ y) → (y ≡ z) → (x ≡ z)
 _◾_ {A} {x} {y} {z} p q = lem-2-1-2 {A} x y z p q
